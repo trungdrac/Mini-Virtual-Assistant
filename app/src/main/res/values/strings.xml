@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mini Virtual Assistant</string>
+    <string name="speech_prompt">Hãy nói gì đó...</string>
+    <string name="speech_not_supported">Xin lỗi, điện thoại của bạn không hỗ trợ thu giọng nói</string>
+    <string name="tap_on_mic">Nhấn vào micro để nói</string>
+</resources>
