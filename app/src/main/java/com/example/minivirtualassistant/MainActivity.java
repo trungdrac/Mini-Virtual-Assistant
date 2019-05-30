@@ -10,12 +10,15 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,23 +27,33 @@ import org.apache.commons.lang3.text.WordUtils;
 
 public class MainActivity extends Activity {
 
+    private ImageView logo;
     private TextView txtSpeechInput;
     private ImageButton btnSpeak;
+    Intent intent = new Intent();
+
     //Hằng khớp onActivityResult
     private final int REQ_CODE_SPEECH_INPUT = 1;
-    Intent intent = new Intent();
+
     //text lấy từ speech
     private String resultText = "";
+
     //mảng chứa kết quả tách chuỗi resultText
     private String[] splitText;
+
     //vị trí của 1 số key trong splitText
     int index = 0;
+
+    //Id tìm kiếm
+    private String searchId = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        logo = (ImageView) findViewById(R.id.logo);
+        logo.setImageResource(R.drawable.logo);
         txtSpeechInput = (TextView) findViewById(R.id.txtSpeechInput);
         btnSpeak = (ImageButton) findViewById(R.id.btnSpeak);
 
@@ -50,6 +63,38 @@ public class MainActivity extends Activity {
                 promptSpeechInput();
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        getMenuInflater().inflate(R.menu.menu_demo, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.call:
+                Toast.makeText(this, "Gọi điện cho/đến/tới + <Số điện thoại/Tên trong danh bạ>",Toast.LENGTH_LONG).show();
+                break;
+            case R.id.sendMess:
+                Toast.makeText(this, "Gửi <nội dung tin nhắn> + cho/đến/tới + <Số điện thoại/Tên trong danh bạ>",Toast.LENGTH_LONG).show();
+                break;
+            case R.id.openApp:
+                Toast.makeText(this, "Mở/bật/vào ứng dụng + <Tên ứng dụng>",Toast.LENGTH_LONG).show();
+                break;
+            case R.id.openWeb:
+                Toast.makeText(this, "Mở/bật/vào ... + <url trang web> + ...",Toast.LENGTH_LONG).show();
+                break;
+            case R.id.map:
+                Toast.makeText(this, "Đường đi từ + <Địa điểm 1> + đến/tới + <Địa điểm 2>",Toast.LENGTH_LONG).show();
+                break;
+            case R.id.search:
+                Toast.makeText(this, "Tìm kiếm + <Nội dung tìm kiếm>",Toast.LENGTH_LONG).show();
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     //Hiển thị hộp thoại thu giọng nói của google
@@ -104,16 +149,34 @@ public class MainActivity extends Activity {
                     break;
                 }
             }
+        } else if (splitText.length > 1 && splitText[0].equals("tìm") && splitText[1].equals("kiếm")) {
+            for (int i = 2; i < splitText.length; i++) {
+                searchId += splitText[i] + "+";
+            }
+            search();
+        } else if (splitText.length > 2 && splitText[0].equals("đường") && splitText[1].equals("đi") && splitText[2].equals("từ")) {
+            for (int i = splitText.length - 2; i > 2; i--) {
+                if (splitText[i].equals("đến") || splitText[i].equals("tới")) {
+                    index = i;
+                    map();
+                    break;
+                }
+            }
+        } else {
+            for (int i = 0; i < splitText.length; i++) {
+                searchId += splitText[i] + "+";
+            }
+            search();
         }
     }
 
 
     //Mở ứng dụng
-    private void openApp(){
+    private void openApp() {
         Boolean check = true;
         String appName = "";
-        for ( int i=3; i<splitText.length; i++ ){
-            if (!splitText[i].equals("google")){
+        for (int i = 3; i < splitText.length; i++) {
+            if (!splitText[i].equals("google")) {
                 appName += splitText[i];
             }
         }
@@ -127,7 +190,7 @@ public class MainActivity extends Activity {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.CUPCAKE) {
                     intent = getPackageManager().getLaunchIntentForPackage(packageInfo.packageName);
                 }
-                if (intent != null){
+                if (intent != null) {
                     try {
                         startActivity(intent);
                     } catch (ActivityNotFoundException e) {
@@ -138,18 +201,18 @@ public class MainActivity extends Activity {
                 break;
             }
         }
-        if (check){
+        if (check) {
             Toast.makeText(MainActivity.this, "Ứng dụng chưa được cài đặt", Toast.LENGTH_LONG).show();
         }
     }
 
     //Mở trang web
-    private void openWeb(){
-        for ( int i=0; i<splitText.length; i++ ){
-            if (splitText[i].matches("[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)")){
+    private void openWeb() {
+        for (int i = 0; i < splitText.length; i++) {
+            if (splitText[i].matches("[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)")) {
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse("http://" + splitText[i]));
-                if (intent != null){
+                if (intent != null) {
                     try {
                         startActivity(intent);
                     } catch (ActivityNotFoundException e) {
@@ -164,15 +227,14 @@ public class MainActivity extends Activity {
     GetPhoneNumberFromContact getPhoneNumber = new GetPhoneNumberFromContact();
 
     //Gọi điện
-    private void call(){
+    private void call() {
         String phoneNumber = "";
         String contact = "";
         intent.setAction(Intent.ACTION_CALL);
         if (splitText.length > 3 && splitText[3].matches("\\d*")) {
             phoneNumber = splitText[3];
-        }
-        else{
-            for( int i=3; i<splitText.length; i++){
+        } else {
+            for (int i = 3; i < splitText.length; i++) {
                 contact += splitText[i] + " ";
             }
             contact = WordUtils.capitalizeFully(contact.trim());
@@ -190,27 +252,25 @@ public class MainActivity extends Activity {
                     Toast.makeText(MainActivity.this, "Có lỗi xảy ra", Toast.LENGTH_LONG).show();
                 }
             }
-        }
-        else {
+        } else {
             Toast.makeText(MainActivity.this, "Bạn chưa lưu số của: " + contact, Toast.LENGTH_LONG).show();
         }
     }
 
     //Nhắn tin
-    private void sendTo(){
+    private void sendTo() {
         String smsBody = "";
         intent.setAction(Intent.ACTION_SENDTO);
-        for(int j=1; j<index; j++ ){
+        for (int j = 1; j < index; j++) {
             smsBody += splitText[j] + " ";
             smsBody = StringUtils.capitalize(smsBody);
         }
         String phoneNumber = "";
         String contact = "";
-        if (splitText.length > index+1 && splitText[index+1].matches("\\d*")) {
-            phoneNumber = splitText[index+1];
-        }
-        else{
-            for(int k=index+1; k<splitText.length; k++){
+        if (splitText.length > index + 1 && splitText[index + 1].matches("\\d*")) {
+            phoneNumber = splitText[index + 1];
+        } else {
+            for (int k = index + 1; k < splitText.length; k++) {
                 contact += splitText[k] + " ";
             }
             contact = WordUtils.capitalizeFully(contact.trim());
@@ -218,18 +278,54 @@ public class MainActivity extends Activity {
         }
         if (!phoneNumber.equals("unsaved")) {
             intent.putExtra("sms_body", smsBody);
-            intent.setData(Uri.parse("sms:"+ phoneNumber));
-            try{
+            intent.setData(Uri.parse("sms:" + phoneNumber));
+            try {
                 startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Có lỗi xảy ra", Toast.LENGTH_LONG).show();
             }
-            catch(ActivityNotFoundException e){
-                Toast.makeText(MainActivity.this,"Có lỗi xảy ra",Toast.LENGTH_LONG).show();
-            }
-        }
-        else {
+        } else {
             Toast.makeText(MainActivity.this, "Bạn chưa lưu số của: " + contact, Toast.LENGTH_LONG).show();
         }
     }
+
+    //tìm kiếm
+    private void search() {
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("https://www.google.com/search?q=" + searchId));
+        if (intent != null) {
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Có lỗi xảy ra", Toast.LENGTH_LONG).show();
+            }
+        }
+        searchId = "";
+    }
+
+    //Chỉ đường
+    private void map() {
+        String startAddr = "";
+        String destinationAddr = "";
+        for (int j = 3; j < index; j++) {
+            splitText[j] = StringUtils.capitalize(splitText[j]);
+            startAddr += splitText[j] + "+";
+        }
+        for (int k = index + 1; k < splitText.length; k++) {
+            splitText[k] = StringUtils.capitalize(splitText[k]);
+            destinationAddr += splitText[k] + "+";
+        }
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("http://maps.google.com/maps?saddr=" + startAddr + "&daddr=" + destinationAddr));
+        if (intent != null) {
+            try {
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Có lỗi xảy ra", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
 }
 
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Gọi điện"
+        android:id="@+id/call"/>
+
+    <item android:title="Gửi tin nhắn"
+        android:id="@+id/sendMess"/>
+
+    <item android:title="Mở ứng dụng"
+        android:id="@+id/openApp"/>
+
+    <item android:title="Mở trang web"
+        android:id="@+id/openWeb"/>
+
+    <item android:title="Tìm đường"
+        android:id="@+id/map"/>
+
+    <item android:title="Tìm kiếm"
+        android:id="@+id/search"/>
+</menu>
